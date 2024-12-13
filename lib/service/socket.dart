@@ -44,7 +44,7 @@ class SocketService {
       // Unirse a la sala
       socket.emit('setroomgeolocator', {
         'roomId': roomId,
-        'username': 'FlutterUser',
+        'username': 'mariasd =  ',
       });
     });
 
@@ -55,8 +55,7 @@ class SocketService {
 
     // Escuchar actualizaciones de ubicación
     socket.on('updatelocationrecived', (data) {
-      String locationMessage =
-          '${data['lat']} ,${data['long']},${data['user']}';
+      String locationMessage = '${data['lat']} ,${data['lng']},${data['user']}';
 
       onLocationUpdate(locationMessage);
     });
@@ -67,7 +66,7 @@ class SocketService {
     socket.emit('updatelocation', {
       'roomId': roomId,
       'lat': lat,
-      'long': long,
+      'lng': long,
       'user': user,
     });
   }

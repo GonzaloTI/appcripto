@@ -10,8 +10,8 @@ import '../service/socket.dart';
 
 class CodeScreen extends StatefulWidget {
   final String code; // El código que se pasa desde HomeScreen
-
-  const CodeScreen({super.key, required this.code});
+  final String nombre;
+  const CodeScreen({super.key, required this.code, required this.nombre});
 
   @override
   _CodeScreenState createState() => _CodeScreenState();
@@ -78,7 +78,7 @@ class _CodeScreenState extends State<CodeScreen> {
     );
 
     // Conectar al servidor con la URL y el código de la sala
-    socketService.connect(constserver, widget.code);
+    socketService.connect(constserversocket, widget.code);
   }
 
   @override
@@ -98,7 +98,14 @@ class _CodeScreenState extends State<CodeScreen> {
           children: [
             Text(
               'Código ingresado: ${widget.code}',
-              style: Theme.of(context).textTheme.headline4,
+              style:
+                  Theme.of(context).textTheme.bodyText2?.copyWith(fontSize: 14),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Nombre : ${widget.nombre}',
+              style:
+                  Theme.of(context).textTheme.bodyText2?.copyWith(fontSize: 14),
             ),
             const SizedBox(height: 20),
             Text(
@@ -126,10 +133,10 @@ class _CodeScreenState extends State<CodeScreen> {
               width: double.infinity,
               child: GoogleMap(
                 mapType: MapType.terrain,
-                initialCameraPosition: CameraPosition(
+                initialCameraPosition: const CameraPosition(
                   target:
-                      LatLng(0.0, 0.0), // Ubicación inicial (se puede ajustar)
-                  zoom: 19.0, // Nivel de zoom inicial
+                      LatLng(-17.776435, -63.196615), // Nueva ubicación inicial
+                  zoom: 15.0, // Nivel de zoom inicial
                 ),
                 onMapCreated: _onMapCreated,
                 myLocationEnabled: true, // Habilitar el botón de ubicación

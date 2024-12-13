@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart'; // Usamos Permissio
 import 'dart:async';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../service/constant.dart';
 import '../service/servicebackground.dart';
@@ -35,7 +36,7 @@ class _MapaScreenState extends State<MapaScreen> {
 
   late IO.Socket socket;
   String coderoom =
-      "123"; // DEBERIA SER EL NUMERO DEL CLIENTE , QUE FUNCIONA COMO ROOMID
+      'fa8140d6-712c-4cfa-b050-0c04ee7776dd'; // DEBERIA SER EL NUMERO DEL CLIENTE , QUE FUNCIONA COMO ROOMID
   late SocketService socketService; // Instancia de la clase SocketService
 
   // Método para obtener la ubicación del usuario usando geolocator
@@ -57,7 +58,7 @@ class _MapaScreenState extends State<MapaScreen> {
         // Agregar un marcador en la ubicación actual
         _markers.add(
           Marker(
-            markerId: const MarkerId('user_location'),
+            markerId: const MarkerId('user_location3'),
             position: LatLng(position.latitude, position.longitude),
             infoWindow: const InfoWindow(title: 'Mi Ubicación'),
           ),
@@ -80,8 +81,12 @@ class _MapaScreenState extends State<MapaScreen> {
 
   Future<void> _getsocket() async {
     // Constructor que solo recibe la URL y el roomId
+
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    String codigoApoderado = pref.getString('roomId') ?? '';
+    coderoom = codigoApoderado;
     socketService = SocketService.conectar(
-      constserver, // URL del servidor
+      constserversocket, // URL del servidor
       coderoom, // Room ID
     );
   }
@@ -123,7 +128,7 @@ class _MapaScreenState extends State<MapaScreen> {
       print(
           "Ubicación actual: Latitud=${position.latitude}, Longitud=${position.longitude}");
       socketService.emitir(
-          coderoom, position.latitude, position.longitude, "user1");
+          coderoom, position.latitude, position.longitude, "User");
       // Opcional: Puedes actualizar los marcadores o realizar otra acción aquí
       setState(() {
         _markers.add(
@@ -169,16 +174,18 @@ class _MapaScreenState extends State<MapaScreen> {
       ),
       body: _isLocationPermissionGranted
           ? GoogleMap(
-              mapType: MapType.terrain,
               onMapCreated: _onMapCreated,
               initialCameraPosition: const CameraPosition(
-                target: LatLng(
-                    0.0, 0.0), // Inicializa en una posición predeterminada
-                zoom: 19.0,
+                target:
+                    LatLng(37.7749, -122.4194), // San Francisco, por ejemplo
+                zoom: 12.0,
               ),
               markers: _markers, // Mostrar los marcadores en el mapa
               myLocationEnabled: true, // Habilitar el botón de ubicación
               myLocationButtonEnabled: true, // Habilitar el botón de ubicación
+              mapType: MapType.hybrid,
+              indoorViewEnabled: false, // Deshabilitar vistas interiores
+              trafficEnabled: false, // Opcional: Deshabilitar tráfico
             )
           : const Center(
               child: Text(

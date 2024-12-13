@@ -34,6 +34,6 @@ final List<Map<String, dynamic>> drawerItems = [
   {
     'title': 'Cerrar sesión',
     'icon': Icons.logout,
-    'route': '/',
+    'route': '/logout',
   },
 ];

@@ -1,13 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../model/api_response.dart';
+import '../service/constant.dart';
+import '../service/user_service.dart';
 import '../widget/my_drawer.dart';
 import 'CodeScreen.dart';
 import 'auxilio_screen.dart';
 import 'emergencia_screen.dart';
 import 'mapa_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<dynamic> _userList = [];
+  bool _loading = false;
+
+  Future<void> retrieveUsers() async {
+    setState(() {
+      _loading = true;
+    });
+
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    String userId = pref.getString('userId') ?? '';
+
+    ApiResponse response = await getprotegidos(userId);
+    if (response.error == null) {
+      setState(() {
+        _userList = response.data as List<dynamic>;
+        _loading = false;
+      });
+    } else if (response.error == unauthorized) {
+      if (context.mounted) {
+        Navigator.of(context).pushNamed('/login');
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('${response.error}'),
+        ));
+      }
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    retrieveUsers();
+  }
 
   void _showConfirmationDialog(BuildContext context) {
     showDialog(
@@ -89,6 +137,77 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  void _showCodeInputModal(BuildContext context) {
+    final TextEditingController codeController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Ajustar el tamaño del bottom sheet
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize
+                .min, // Para evitar que se expanda más de lo necesario
+            children: [
+              TextField(
+                controller: codeController,
+                decoration: const InputDecoration(
+                  hintText: 'Código',
+                ),
+              ),
+              const SizedBox(
+                  height: 20), // Separación entre el input y la lista
+              // Lista de personas
+              _loading
+                  ? const CircularProgressIndicator()
+                  : Container(
+                      height: 150, // Ajusta la altura si es necesario
+                      child: ListView.builder(
+                        itemCount: _userList.length,
+                        itemBuilder: (context, index) {
+                          final user = _userList[index];
+                          return ListTile(
+                            title: Text('${user.nombre} ${user.apellido}'),
+                            subtitle: Text('Teléfono: ${user.telefono}'),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CodeScreen(
+                                      code: user.id, nombre: user.nombre),
+                                ),
+                              );
+                              print('Seleccionado: ${user.id}');
+                            },
+                          );
+                        },
+                      ),
+                    ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  // Obtén el código ingresado
+                  String code = codeController.text;
+                  // Aquí rediriges a la pantalla que desees con el código
+                  Navigator.of(context).pop(); // Cerrar el modal
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CodeScreen(code: code, nombre: "por codigo"),
+                    ),
+                  );
+                },
+                child: const Text('Aceptar'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -149,63 +268,4 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-void _showCodeInputModal(BuildContext context) {
-  final TextEditingController codeController = TextEditingController();
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true, // Ajustar el tamaño del bottom sheet
-    builder: (BuildContext context) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize
-              .min, // Para evitar que se expanda más de lo necesario
-          children: [
-            TextField(
-              controller: codeController,
-              decoration: const InputDecoration(
-                hintText: 'Código',
-              ),
-            ),
-            const SizedBox(height: 20), // Separación entre el input y la lista
-            // Lista de personas
-            Container(
-              height: 150, // Ajusta la altura si es necesario
-              child: ListView.builder(
-                itemCount: 4, // Número de elementos en la lista
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text('Persona ${index + 1}'), // Texto 1, 2, 3, 4
-                    onTap: () {
-                      // Acción cuando se selecciona un ítem
-                      print('Seleccionado: Persona ${index + 1}');
-                    },
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Obtén el código ingresado
-                String code = codeController.text;
-                // Aquí rediriges a la pantalla que desees con el código
-                Navigator.of(context).pop(); // Cerrar el modal
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CodeScreen(code: code),
-                  ),
-                );
-              },
-              child: const Text('Aceptar'),
-            ),
-          ],
-        ),
-      );
-    },
-  );
 }
